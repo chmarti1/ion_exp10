@@ -1,7 +1,8 @@
-start 17.326
-stop 17.714
-mass 0.0
-duration 0.3879999999999981
-mfr 0.0
-current 69.71055459149743
+start_s 17.326
+stop_s 17.714
+mass_g 0.0
+duration_s 0.3879999999999981
+mfr_gps 0.0
+i_mean_ua 69.71055459149743
+i_std_ua 10.696072363966433
 

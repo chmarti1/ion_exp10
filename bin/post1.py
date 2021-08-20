@@ -5,6 +5,7 @@ import lconfig as lc
 import matplotlib.pyplot as plt
 import os,sys
 from multiprocessing import Pool
+import lplot
 
 def worker(target):
     print(target)
@@ -16,10 +17,6 @@ def worker(target):
 datadir = '../data'
 threshold = 40.
 ####
-
-# The early data are scanned one block at a time to identify the first 
-# block where preheating had begun.  This is used to identify the 
-# standoff offset height.
 
 
 force = 'force' in sys.argv[1:]
@@ -96,22 +93,27 @@ for index, value in enumerate(I):
                 stop = index - N
                 count = 0
 
+if start == 0 or stop == 0:
+    raise Exception(f'Failed to find a trigger signal on {arg}.')
+
 # What was the test duration?
 duration_s = t[stop] - t[start]
 # Get the mean current signal
 i_mean_ua = np.mean(current[start:stop])
+i_std_ua = np.std(current[start:stop])
 
 # mass flow rate
 mfr_gps = m_g / duration_s
 
 target = os.path.join(targetdir, 'post1.param')
 with open(target, 'w') as ff:
-    ff.write(f'start {t[start]}\n')
-    ff.write(f'stop {t[stop]}\n')
-    ff.write(f'mass {m_g}\n')
-    ff.write(f'duration {duration_s}\n')
-    ff.write(f'mfr {mfr_gps}\n')
-    ff.write(f'current {i_mean_ua}\n')
+    ff.write(f'start_s {t[start]}\n')
+    ff.write(f'stop_s {t[stop]}\n')
+    ff.write(f'mass_g {m_g}\n')
+    ff.write(f'duration_s {duration_s}\n')
+    ff.write(f'mfr_gps {mfr_gps}\n')
+    ff.write(f'i_mean_ua {i_mean_ua}\n')
+    ff.write(f'i_std_ua {i_std_ua}\n')
     ff.write(f'\n')
 
 
