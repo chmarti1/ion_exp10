@@ -14,6 +14,7 @@ def worker(target):
 # These are lines of code you may want to edit before running post.py
 #
 datadir = '../data'
+threshold = 40.
 ####
 
 # The early data are scanned one block at a time to identify the first 
@@ -30,7 +31,7 @@ if arg == 'all':
     contents = os.listdir(datadir)
     contents.sort()
     with Pool(processes=8) as pool:
-       pool.map(worker, contents) 
+       pool.map(worker, contents)
     exit(0)
 
 for this in os.listdir(datadir):
@@ -39,7 +40,7 @@ for this in os.listdir(datadir):
             raise Exception(f'POST1.PY: found multiple data entries that end with {arg}')
         sourcedir = os.path.join(datadir,this)
         
-if not quiet: 
+if not quiet:
     print('Working on: ' + sourcedir)
 
 
@@ -62,3 +63,74 @@ voltage = data.get_channel(1)
 current = data.get_channel(0)
 t = data.get_time()
 
+# Get the parameters
+m1 = data.get_meta(0,'weight1_g')
+m2 = data.get_meta(0, 'weight2_g')
+m_g = m1 - m2
+
+# Find the signal
+I = current > threshold
+
+start = 0
+stop = 0
+N = 10
+count = 0
+# Filter for start and stop
+# The start must be True for at least N samples
+for index, value in enumerate(I):
+    # If we haven't found the starting index yet
+    if start == 0:
+        if value:
+            count += 1
+            if count == N:
+                start = index - N
+                count = 0
+        else:
+            count = 0
+    elif stop == 0:
+        if value:
+            count = 0
+        else:
+            count += 1
+            if count == N:
+                stop = index - N
+                count = 0
+
+# What was the test duration?
+duration_s = t[stop] - t[start]
+# Get the mean current signal
+i_mean_ua = np.mean(current[start:stop])
+
+# mass flow rate
+mfr_gps = m_g / duration_s
+
+target = os.path.join(targetdir, 'post1.param')
+with open(target, 'w') as ff:
+    ff.write(f'start {t[start]}\n')
+    ff.write(f'stop {t[stop]}\n')
+    ff.write(f'mass {m_g}\n')
+    ff.write(f'duration {duration_s}\n')
+    ff.write(f'mfr {mfr_gps}\n')
+    ff.write(f'current {i_mean_ua}\n')
+    ff.write(f'\n')
+
+
+target = os.path.join(targetdir, 'total.png')
+f = plt.figure(1, figsize=(6,4))
+f.clf()
+ax = f.subplots(1,1)
+ax.plot(t, current)
+ax.set_xlabel('Time (s)', fontsize=14)
+ax.set_ylabel('Current (uA)', fontsize=14)
+ax.grid(True)
+f.savefig(target)
+
+target = os.path.join(targetdir, 'signal.png')
+f = plt.figure(1, figsize=(6,4))
+f.clf()
+ax = f.subplots(1,1)
+ax.plot(t[start:stop], current[start:stop])
+ax.set_xlabel('Time (s)', fontsize=14)
+ax.set_ylabel('Current (uA)', fontsize=14)
+ax.grid(True)
+f.savefig(target)

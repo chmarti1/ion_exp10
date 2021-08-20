@@ -45,7 +45,7 @@ aoduty 0.500000
 meta float
 n2_psig 20.000000
 weight1_g 0.329000
-weight2_g 0.000000
+weight2_g 0.310000
 standoff_in 0.500000
 cut_o2_psig 40.000000
 meta end
