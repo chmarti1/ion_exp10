@@ -40,8 +40,14 @@ for arg in sys.argv[1:]:
     i_std_ua.append(post1['i_std_ua'])
     mfr_std_mgps.append(1./post1['duration_s'])
 
+C = np.polyfit(mfr_mgps, i_mean_ua, 1)
+x = np.linspace(0,30,21)
+y = np.polyval(C,x)
+
 ax = lplot.init_fig('Carbon flow rate (mg/s)', 'Current ($\mu$A)', label_size=14)
 ax.errorbar(mfr_mgps, i_mean_ua, yerr=i_std_ua, xerr=mfr_std_mgps, fmt='ko', mfc='k', lc=None, ecolor='k', elinewidth=1, capsize=6)
+ax.plot(x,y,'k--')
+ax.text(2,160,f'y = {C[0]:.3f} x + {C[1]:.3f}',fontsize=14,backgroundcolor='w')
 ax.get_figure().savefig('../export/im.png')
 
 with open('../export/post2.param', 'w') as ff:
