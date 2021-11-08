@@ -17,28 +17,33 @@ i_mean_ua = []
 i_std_ua = []
 mfr_std_mgps = []
 
-# Loop through the included datasets
-for arg in sys.argv[1:]:
-    sourcedir = None
-    for this in os.listdir(datadir):
-        if this.endswith(arg):
-            if sourcedir:
-                raise Exception(f'POST1.PY: found multiple data entries that end with {arg}')
-            sourcedir = os.path.join(datadir,this)
-    # Load the post1 results    
-    post1_param = os.path.join(sourcedir, 'post1', 'post1.param')
-    post1 = {}
-    with open(post1_param, 'r') as ff:
-        for thisline in ff:
-            if not thisline.isspace():
-                param,value = thisline.split()
-                value = float(value)
-                post1[param] = value
-                
-    mfr_mgps.append(1e3*post1['mfr_gps'])
-    i_mean_ua.append(post1['i_mean_ua'])
-    i_std_ua.append(post1['i_std_ua'])
-    mfr_std_mgps.append(1./post1['duration_s'])
+with open('../export/post2.dat', 'w') as f2:
+    f2.write('# Sourcedir  C(mg/s)  C_std(mg/s)  I(uA)  I_std(uA)\n')
+    # Loop through the included datasets
+    for arg in sys.argv[1:]:
+        sourcedir = None
+        for this in os.listdir(datadir):
+            if this.endswith(arg):
+                if sourcedir:
+                    raise Exception(f'POST1.PY: found multiple data entries that end with {arg}')
+                sourcedir = os.path.join(datadir,this)
+        # Load the post1 results    
+        post1_param = os.path.join(sourcedir, 'post1', 'post1.param')
+        post1 = {}
+        with open(post1_param, 'r') as ff:
+            for thisline in ff:
+                if not thisline.isspace():
+                    param,value = thisline.split()
+                    value = float(value)
+                    post1[param] = value
+        
+        mfr = 1e3*post1['mfr_gps']
+        mfr_std = 1./post1['duration_s']
+        mfr_mgps.append(mfr)
+        i_mean_ua.append(post1['i_mean_ua'])
+        i_std_ua.append(post1['i_std_ua'])
+        mfr_std_mgps.append(mfr_std)
+        f2.write(f'{sourcedir}\t{mfr}\t{mfr_std}\t{post1["i_mean_ua"]}\t{post1["i_std_ua"]}\n')
 
 C = np.polyfit(mfr_mgps, i_mean_ua, 1)
 x = np.linspace(0,30,21)
